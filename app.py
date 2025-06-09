@@ -18,14 +18,15 @@ client.messages.create(
   body="This is an automated message sent from Python"
 )
 
-from flask import Flask, request
+from flask import Flask
 
 app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return "AI Reminder App is running!"
+    return '<h1>✅ AI Reminder App is Running!</h1><p>Next step: create a reminder form.</p>'
 
 if __name__ == '__main__':
     app.run(debug=True)
+
 
