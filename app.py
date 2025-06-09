@@ -20,7 +20,7 @@ def send_message():
     # Send the message
     message = client.messages.create(
         to="+15852453824",     # Add +1 if it's a US number
-        from_="+16192952136",  # Use the Twilio number in E.164 format
+        from="+16192952136",  # Use the Twilio number in E.164 format
         body="This is an automated message sent from Python!"
     )
 
