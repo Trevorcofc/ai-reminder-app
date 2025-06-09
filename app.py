@@ -13,8 +13,8 @@ def home():
 @app.route('/send')
 def send_message():
     # Twilio Configs
-    account_sid = "AC88c9898d2837971768c6430678579d23"
-    auth_token = "51bd21338bba151ad291cbc5d54708d7"
+    account_sid = "AC88c9898d2839791768c6436078579d23"
+    auth_token = "b6bd71264ec7d36ba1a0c3da3087c130"
     client = Client(account_sid, auth_token)
 
     # Send the message
