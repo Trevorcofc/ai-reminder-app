@@ -6,7 +6,9 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
+    print("🏠 Home page accessed")
     return '<h1>✅ AI Reminder App is Running!</h1><p>Next step: create a reminder form.</p>'
+
 
 @app.route('/send')
 def send_message():
