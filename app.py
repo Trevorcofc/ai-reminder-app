@@ -12,7 +12,7 @@ scheduler = BackgroundScheduler()
 scheduler.start()
 
 # 🔑 Set your OpenAI project key here
-OPENAI_API_KEY = "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"
+OPENAI_API_KEY = "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"
 
 @app.route('/')
 def home():
