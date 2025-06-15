@@ -54,7 +54,7 @@ def extract_reminder_with_gpt(reminder_input):
     data = {
         "model": "gpt-3.5-turbo",
         "messages": [
-            {"role": "system", "content": "Extract the delay (in minutes) and reminder message from the user's request. Only respond in JSON format like this: {\"delay\": 25, \"message\": \"check the pizza\"}"},
+            {"role": "system", "content": "Extract the delay (in minutes) and reminder message from the user's request. Only respond in JSON format like: {\"delay\": 25, \"message\": \"check the pizza\"}"},
             {"role": "user", "content": f'Remind me: "{reminder_input}"'}
         ]
     }
@@ -63,18 +63,20 @@ def extract_reminder_with_gpt(reminder_input):
         response = requests.post(url, headers=headers, json=data)
         response.raise_for_status()
         reply_text = response.json()['choices'][0]['message']['content']
-        print("🧠 GPT Response:", reply_text)
+        print("🧠 GPT Raw Reply:", reply_text)  # <-- Add this line
 
-        # Clean JSON output if GPT adds extra text
+        # Strip extra non-JSON content (GPT sometimes adds "Sure!" etc.)
         json_start = reply_text.find("{")
         json_end = reply_text.rfind("}") + 1
         json_text = reply_text[json_start:json_end]
+        print("🧼 Cleaned JSON:", json_text)  # <-- Optional
 
         return json.loads(json_text)
 
     except Exception as e:
         print("❌ GPT error:", e)
         return {"delay": 0, "message": "Failed to parse reminder"}
+
 
 def send_email(to_sms, message_body):
     msg = EmailMessage()
