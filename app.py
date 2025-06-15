@@ -1,32 +1,38 @@
+import smtplib
+from email.message import EmailMessage
 from flask import Flask
-from twilio.rest import Client
 
-# Flask setup
 app = Flask(__name__)
 
 @app.route('/')
 def home():
-    print("🏠 Home page accessed")
     return '<h1>✅ AI Reminder App is Running!</h1><p>Next step: create a reminder form.</p>'
-
 
 @app.route('/send')
 def send_message():
-    # Twilio Configs
-    account_sid = "AC88c9898d2839791768c6436078579d23"
-    auth_token = "b6bd71264ec7d36ba1a0c3da3087c130"
-    client = Client(account_sid, auth_token)
+    # Define the phone number and carrier gateway
+    phone_number = "1234567890"
+    carrier_gateway = "vtext.com"  # For Verizon; change based on user’s carrier
+    to_sms = f"{phone_number}@{carrier_gateway}"
 
-    # Send the message
-    message = client.messages.create(
-        to="+15852453824",     # Add +1 if it's a US number
-        from_="+16193295136",  # Use the Twilio number in E.164 format
-        body="This is an automated message sent from Python!"
-    )
+    # Create the email message
+    msg = EmailMessage()
+    msg.set_content("⏰ Reminder: This is your custom AI reminder!")
+    msg['Subject'] = "AI Reminder"
+    msg['From'] = "yourgmail@gmail.com"
+    msg['To'] = to_sms
 
-    return f'<p>✅ Message sent! SID: {message.sid}</p>'
+    # Send the email via Gmail SMTP
+    try:
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+            smtp.login("yourgmail@gmail.com", "your_app_password")  # Use Gmail App Password
+            smtp.send_message(msg)
+        return "<p>✅ Message sent via email-to-SMS!</p>"
+    except Exception as e:
+        return f"<p>❌ Failed to send message: {e}</p>"
 
 if __name__ == '__main__':
     app.run(debug=True)
+
 
 
