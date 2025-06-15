@@ -4,7 +4,8 @@ from flask import Flask, render_template, request
 from apscheduler.schedulers.background import BackgroundScheduler
 import datetime
 import json
-import requests
+from openai import OpenAI
+
 
 # Initialize Flask and APScheduler
 app = Flask(__name__)
@@ -14,6 +15,7 @@ scheduler.start()
 # 🔑 Set your OpenAI project key here
 OPENAI_API_KEY = "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"
 
+client = OpenAI(api_key=OPENAI_API_KEY)
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -46,30 +48,22 @@ def send_message():
         return f"<p>❌ Failed to schedule reminder: {e}</p>"
 
 def extract_reminder_with_gpt(reminder_input):
-    url = "https://api.openai.com/v1/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {OPENAI_API_KEY}",
-        "Content-Type": "application/json"
-    }
-    data = {
-        "model": "gpt-3.5-turbo",
-        "messages": [
-            {"role": "system", "content": "Extract the delay (in minutes) and reminder message from the user's request. Only respond in JSON format like: {\"delay\": 25, \"message\": \"check the pizza\"}"},
-            {"role": "user", "content": f'Remind me: "{reminder_input}"'}
-        ]
-    }
-
     try:
-        response = requests.post(url, headers=headers, json=data)
-        response.raise_for_status()
-        reply_text = response.json()['choices'][0]['message']['content']
-        print("🧠 GPT Raw Reply:", reply_text)  # <-- Add this line
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "Only respond in JSON format like: {\"delay\": 25, \"message\": \"check the pizza\"}"},
+                {"role": "user", "content": f"Remind me: {reminder_input}"}
+            ]
+        )
 
-        # Strip extra non-JSON content (GPT sometimes adds "Sure!" etc.)
+        reply_text = response.choices[0].message.content
+        print("🧠 GPT Raw Reply:", reply_text)
+
+        # Strip to only JSON if GPT adds extra text
         json_start = reply_text.find("{")
         json_end = reply_text.rfind("}") + 1
         json_text = reply_text[json_start:json_end]
-        print("🧼 Cleaned JSON:", json_text)  # <-- Optional
 
         return json.loads(json_text)
 
