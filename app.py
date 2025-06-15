@@ -11,7 +11,7 @@ def home():
 @app.route('/send')
 def send_message():
     # Define the phone number and carrier gateway
-    phone_number = "5859536336"
+    phone_number = "5852453824"
     carrier_gateway = "vtext.com"  # For Verizon; change based on user’s carrier
     to_sms = f"{phone_number}@{carrier_gateway}"
 
