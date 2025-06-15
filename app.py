@@ -31,12 +31,15 @@ def send_message():
     message_body = parsed.get("message", "No message provided")
 
     # Schedule the reminder
-       try:
-        response = requests.post(url, headers=headers, json=data)
-        response.raise_for_status()
-        reply_text = response.json()['choices'][0]['message']['content']
-        print("🧠 GPT Response:", reply_text)  # <--- ADD THIS
-        return json.loads(reply_text)
+    try:
+        run_time = datetime.datetime.now() + datetime.timedelta(minutes=delay_minutes)
+        scheduler.add_job(
+            func=send_email,
+            trigger='date',
+            run_date=run_time,
+            args=[to_sms, message_body]
+        )
+        return f"<p>✅ AI Reminder scheduled in {delay_minutes} minute(s): {message_body}</p>"
 
     except Exception as e:
         print("❌ Scheduling error:", e)
@@ -51,17 +54,25 @@ def extract_reminder_with_gpt(reminder_input):
     data = {
         "model": "gpt-3.5-turbo",
         "messages": [
-            {"role": "system", "content": "Extract the delay (in minutes) and reminder message from the user's request."},
-            {"role": "user", "content": f'Remind me: "{reminder_input}". Respond in JSON like this: {{ "delay": 25, "message": "check the pizza" }}'}
+            {"role": "system", "content": "Extract the delay (in minutes) and reminder message from the user's request. Only respond in JSON format like this: {\"delay\": 25, \"message\": \"check the pizza\"}"},
+            {"role": "user", "content": f'Remind me: "{reminder_input}"'}
         ]
     }
 
-try:
+    try:
         response = requests.post(url, headers=headers, json=data)
         response.raise_for_status()
         reply_text = response.json()['choices'][0]['message']['content']
-        return json.loads(reply_text)
-except Exception as e:
+        print("🧠 GPT Response:", reply_text)
+
+        # Clean JSON output if GPT adds extra text
+        json_start = reply_text.find("{")
+        json_end = reply_text.rfind("}") + 1
+        json_text = reply_text[json_start:json_end]
+
+        return json.loads(json_text)
+
+    except Exception as e:
         print("❌ GPT error:", e)
         return {"delay": 0, "message": "Failed to parse reminder"}
 
@@ -82,6 +93,7 @@ def send_email(to_sms, message_body):
 
 if __name__ == '__main__':
     app.run(debug=True)
+
 
 
 
