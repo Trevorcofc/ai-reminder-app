@@ -23,6 +23,7 @@ def send_message():
 
     # Create full SMS email address
     to_sms = f"{phone_number}@{carrier}"
+    msg['To'] = to_sms
     
     # build the email
     msg = EmailMessage()
