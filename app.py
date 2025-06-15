@@ -4,10 +4,10 @@ from flask import Flask, render_template, request
 from apscheduler.schedulers.background import BackgroundScheduler
 import datetime
 import json
-import openai
 
-# 🔑 Set your OpenAI API key
-openai.api_key = "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"
+from openai import OpenAI
+import os
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # Initialize Flask and APScheduler
 app = Flask(__name__)
@@ -47,16 +47,14 @@ def send_message():
 
 def extract_reminder_with_gpt(reminder_input):
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {
-                    "role": "system",
-                    "content": "Only respond in JSON format like: {\"delay\": 25, \"message\": \"check the pizza\"}"
-                },
-                {"role": "user", "content": f"Remind me: {reminder_input}"}
-            ]
-        )
+        response = client.chat.completions.create(
+    model="gpt-3.5-turbo",
+    messages=[
+        {"role": "system", "content": "Only respond in JSON format like: {\"delay\": 25, \"message\": \"check the pizza\"}"},
+        {"role": "user", "content": f"Remind me: {reminder_input}"}
+    ],
+    response_format={"type": "json_object"}
+    )
 
         reply_text = response['choices'][0]['message']['content']
         print("🧠 GPT Raw Reply:", reply_text)
