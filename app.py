@@ -1,18 +1,20 @@
+import os
+import json
 import smtplib
+import datetime
 from email.message import EmailMessage
 from flask import Flask, render_template, request
 from apscheduler.schedulers.background import BackgroundScheduler
-import datetime
-import json
-
 from dotenv import load_dotenv
+from openai import OpenAI
+
+# 🔐 Load environment variables from .env file
 load_dotenv()
 
-from openai import OpenAI
-import os
+# 🎯 OpenAI client setup
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# Initialize Flask and APScheduler
+# 📅 Flask + Scheduler setup
 app = Flask(__name__)
 scheduler = BackgroundScheduler()
 scheduler.start()
@@ -28,13 +30,11 @@ def send_message():
     reminder_input = request.form.get('reminder_input')
     to_sms = f"{phone_number}@{carrier}"
 
-    # Extract reminder delay and message using GPT
-    parsed = extract_reminder_with_gpt(reminder_input)
-    delay_minutes = parsed.get("delay", 0)
-    message_body = parsed.get("message", "No message provided")
-
-    # Schedule the reminder
     try:
+        parsed = extract_reminder_with_gpt(reminder_input)
+        delay_minutes = parsed.get("delay", 0)
+        message_body = parsed.get("message", "No message provided")
+
         run_time = datetime.datetime.now() + datetime.timedelta(minutes=delay_minutes)
         scheduler.add_job(
             func=send_email,
@@ -42,6 +42,7 @@ def send_message():
             run_date=run_time,
             args=[to_sms, message_body]
         )
+
         return f"<p>✅ AI Reminder scheduled in {delay_minutes} minute(s): {message_body}</p>"
 
     except Exception as e:
@@ -51,23 +52,18 @@ def send_message():
 def extract_reminder_with_gpt(reminder_input):
     try:
         response = client.chat.completions.create(
-    model="gpt-3.5-turbo",
-    messages=[
-        {"role": "system", "content": "Only respond in JSON format like: {\"delay\": 25, \"message\": \"check the pizza\"}"},
-        {"role": "user", "content": f"Remind me: {reminder_input}"}
-    ],
-    response_format={"type": "json_object"}
-    )
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "Respond ONLY in JSON like: {\"delay\": 25, \"message\": \"check the pizza\"}"},
+                {"role": "user", "content": f"{reminder_input}"}
+            ],
+            response_format={"type": "json_object"}
+        )
 
-        reply_text = response['choices'][0]['message']['content']
-        print("🧠 GPT Raw Reply:", reply_text)
+        json_data = response.choices[0].message.content
+        print("🧠 GPT JSON Reply:", json_data)
 
-        # Extract just the JSON part
-        json_start = reply_text.find("{")
-        json_end = reply_text.rfind("}") + 1
-        json_text = reply_text[json_start:json_end]
-
-        return json.loads(json_text)
+        return json.loads(json_data)
 
     except Exception as e:
         print("❌ GPT error:", e)
@@ -77,12 +73,12 @@ def send_email(to_sms, message_body):
     msg = EmailMessage()
     msg.set_content(message_body)
     msg['Subject'] = "AI Reminder"
-    msg['From'] = "ai.reminder.app@gmail.com"
+    msg['From'] = os.getenv("GMAIL_ADDRESS")
     msg['To'] = to_sms
 
     try:
         with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
-            smtp.login("ai.reminder.app@gmail.com", "ymaocsbfmkpxxgki")  # Replace with your app password
+            smtp.login(os.getenv("GMAIL_ADDRESS"), os.getenv("GMAIL_APP_PASSWORD"))
             smtp.send_message(msg)
         print("✅ Sent message to:", to_sms)
     except Exception as e:
@@ -90,6 +86,7 @@ def send_email(to_sms, message_body):
 
 if __name__ == '__main__':
     app.run(debug=True)
+
 
 
 
