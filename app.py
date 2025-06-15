@@ -11,9 +11,9 @@ def home():
 @app.route('/send', methods=['POST'])
 def send_message():
     # get user input from the form 
-    phone_number = request.form.get['phone number']
-    carrier = request.form.get['carrier']
-    message_body = request.form.get['message']
+    phone_number = request.form.get('phone number')
+    carrier = request.form.get('carrier')
+    message_body = request.form.get('message')
 
     # Create full SMS email address
     to_sms = f"{phone_number}@{carrier}"
