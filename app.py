@@ -56,12 +56,12 @@ def extract_reminder_with_gpt(reminder_input):
         ]
     }
 
-    try:
+try:
         response = requests.post(url, headers=headers, json=data)
         response.raise_for_status()
         reply_text = response.json()['choices'][0]['message']['content']
         return json.loads(reply_text)
-    except Exception as e:
+except Exception as e:
         print("❌ GPT error:", e)
         return {"delay": 0, "message": "Failed to parse reminder"}
 
