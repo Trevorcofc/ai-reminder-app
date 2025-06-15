@@ -31,15 +31,13 @@ def send_message():
     message_body = parsed.get("message", "No message provided")
 
     # Schedule the reminder
-    try:
-        run_time = datetime.datetime.now() + datetime.timedelta(minutes=delay_minutes)
-        scheduler.add_job(
-            func=send_email,
-            trigger='date',
-            run_date=run_time,
-            args=[to_sms, message_body]
-        )
-        return f"<p>✅ AI Reminder scheduled in {delay_minutes} minute(s): {message_body}</p>"
+       try:
+        response = requests.post(url, headers=headers, json=data)
+        response.raise_for_status()
+        reply_text = response.json()['choices'][0]['message']['content']
+        print("🧠 GPT Response:", reply_text)  # <--- ADD THIS
+        return json.loads(reply_text)
+
     except Exception as e:
         print("❌ Scheduling error:", e)
         return f"<p>❌ Failed to schedule reminder: {e}</p>"
