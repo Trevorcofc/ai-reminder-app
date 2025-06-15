@@ -11,7 +11,7 @@ def home():
 @app.route('/send')
 def send_message():
     # Define the phone number and carrier gateway
-    phone_number = "1234567890"
+    phone_number = "5852453824"
     carrier_gateway = "vtext.com"  # For Verizon; change based on user’s carrier
     to_sms = f"{phone_number}@{carrier_gateway}"
 
@@ -19,13 +19,13 @@ def send_message():
     msg = EmailMessage()
     msg.set_content("⏰ Reminder: This is your custom AI reminder!")
     msg['Subject'] = "AI Reminder"
-    msg['From'] = "yourgmail@gmail.com"
+    msg['From'] = "ai.reminder.app@gmail.com"
     msg['To'] = to_sms
 
     # Send the email via Gmail SMTP
     try:
         with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
-            smtp.login("yourgmail@gmail.com", "your_app_password")  # Use Gmail App Password
+            smtp.login("ai.reminder.app@gmail.com", "ymaocsbfmkpxxgki")  # Use Gmail App Password
             smtp.send_message(msg)
         return "<p>✅ Message sent via email-to-SMS!</p>"
     except Exception as e:
