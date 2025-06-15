@@ -11,13 +11,13 @@ def home():
 @app.route('/send')
 def send_message():
     # Define the phone number and carrier gateway
-    phone_number = "5852453824"
+    phone_number = "5859536336"
     carrier_gateway = "vtext.com"  # For Verizon; change based on user’s carrier
     to_sms = f"{phone_number}@{carrier_gateway}"
 
     # Create the email message
     msg = EmailMessage()
-    msg.set_content("⏰ Reminder: This is your custom AI reminder!")
+    msg.set_content("Reminder: Hi this is my AI reminder prototype app!")
     msg['Subject'] = "AI Reminder"
     msg['From'] = "ai.reminder.app@gmail.com"
     msg['To'] = to_sms
