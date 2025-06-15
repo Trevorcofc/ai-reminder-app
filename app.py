@@ -4,18 +4,16 @@ from flask import Flask, render_template, request
 from apscheduler.schedulers.background import BackgroundScheduler
 import datetime
 import json
-from openai import OpenAI
+import openai
 
+# 🔑 Set your OpenAI API key
+openai.api_key = "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"
 
 # Initialize Flask and APScheduler
 app = Flask(__name__)
 scheduler = BackgroundScheduler()
 scheduler.start()
 
-# 🔑 Set your OpenAI project key here
-OPENAI_API_KEY = "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"
-
-client = OpenAI(api_key=OPENAI_API_KEY)
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -49,18 +47,21 @@ def send_message():
 
 def extract_reminder_with_gpt(reminder_input):
     try:
-        response = client.chat.completions.create(
+        response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": "Only respond in JSON format like: {\"delay\": 25, \"message\": \"check the pizza\"}"},
+                {
+                    "role": "system",
+                    "content": "Only respond in JSON format like: {\"delay\": 25, \"message\": \"check the pizza\"}"
+                },
                 {"role": "user", "content": f"Remind me: {reminder_input}"}
             ]
         )
 
-        reply_text = response.choices[0].message.content
+        reply_text = response['choices'][0]['message']['content']
         print("🧠 GPT Raw Reply:", reply_text)
 
-        # Strip to only JSON if GPT adds extra text
+        # Extract just the JSON part
         json_start = reply_text.find("{")
         json_end = reply_text.rfind("}") + 1
         json_text = reply_text[json_start:json_end]
@@ -71,7 +72,6 @@ def extract_reminder_with_gpt(reminder_input):
         print("❌ GPT error:", e)
         return {"delay": 0, "message": "Failed to parse reminder"}
 
-
 def send_email(to_sms, message_body):
     msg = EmailMessage()
     msg.set_content(message_body)
@@ -81,7 +81,7 @@ def send_email(to_sms, message_body):
 
     try:
         with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
-            smtp.login("ai.reminder.app@gmail.com", "ymaocsbfmkpxxgki")
+            smtp.login("ai.reminder.app@gmail.com", "ymaocsbfmkpxxgki")  # Replace with your app password
             smtp.send_message(msg)
         print("✅ Sent message to:", to_sms)
     except Exception as e:
@@ -89,6 +89,7 @@ def send_email(to_sms, message_body):
 
 if __name__ == '__main__':
     app.run(debug=True)
+
 
 
 
