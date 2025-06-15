@@ -6,8 +6,8 @@ import datetime
 import openai
 import json  # use this instead of eval()
 
-# Set your OpenAI API key (secure version recommended)
-client = openai.OpenAI(api_key="your-openai-key-here")
+# Set your OpenAI API key (secure version recommended) #comeback to this!!!!
+client = openai.OpenAI(api_key="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")
 
 app = Flask(__name__)
 scheduler = BackgroundScheduler()
@@ -65,7 +65,7 @@ def send_email(to_sms, message_body):
 
     try:
         with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
-            smtp.login("ai.reminder.app@gmail.com", "your-app-password-here")
+            smtp.login("ai.reminder.app@gmail.com", "ymaocsbfmkpxxgki")
             smtp.send_message(msg)
         print("✅ Sent message to:", to_sms)
     except Exception as e:
