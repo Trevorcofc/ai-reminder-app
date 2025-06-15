@@ -1,21 +1,24 @@
 import smtplib
 from email.message import EmailMessage
-from flask import Flask
+from flask import Flask, render_template, request 
 
 app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return '<h1>✅ AI Reminder App is Running!</h1><p>Next step: create a reminder form.</p>'
+    return render_template('index.html') 
 
-@app.route('/send')
+@app.route('/send', methods=['POST'])
 def send_message():
-    # Define the phone number and carrier gateway
-    phone_number = "5852453824"
-    carrier_gateway = "vtext.com"  # For Verizon; change based on user’s carrier
-    to_sms = f"{phone_number}@{carrier_gateway}"
+    # get user input from the form 
+    phone_number = request.form['phone number']
+    carrier = request.form['carrier']
+    message_body = request.form['message']
 
-    # Create the email message
+    # Create full SMS email address
+    to_sms = f"{phone_number}@{carrier}"
+    
+    # build the email
     msg = EmailMessage()
     msg.set_content("Reminder: Hi this is my AI reminder prototype app!")
     msg['Subject'] = "AI Reminder"
