@@ -4,9 +4,10 @@ from flask import Flask, render_template, request
 from apscheduler.schedulers.background import BackgroundScheduler
 import datetime
 import openai
-import os
+import json  # use this instead of eval()
 
-openai.api_key = "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"
+# Set your OpenAI API key (secure version recommended)
+client = openai.OpenAI(api_key="your-openai-key-here")
 
 app = Flask(__name__)
 scheduler = BackgroundScheduler()
@@ -23,22 +24,24 @@ def send_message():
     reminder_input = request.form.get('reminder_input')
     to_sms = f"{phone_number}@{carrier}"
 
-    # 🔍 Use GPT to extract delay + message
     prompt = f"""Extract the reminder delay (in minutes) and message from this request:
     "{reminder_input}"
-    Respond in JSON like this: {{"delay": 25, "message": "check the pizza"}}"""
+    Respond in JSON like this: {{ "delay": 25, "message": "check the pizza" }}"""
 
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": prompt}]
+            messages=[
+                {"role": "system", "content": "Extract the delay (in minutes) and reminder message from the user's request."},
+                {"role": "user", "content": prompt}
+            ]
         )
-        gpt_reply = response['choices'][0]['message']['content']
-        parsed = eval(gpt_reply)  # Safe here only if you're controlling input
+        gpt_reply = response.choices[0].message.content
+        parsed = json.loads(gpt_reply)  # safer than eval()
+
         delay_minutes = parsed.get("delay", 0)
         message_body = parsed.get("message", "No message provided")
 
-        # Schedule with APScheduler
         run_time = datetime.datetime.now() + datetime.timedelta(minutes=delay_minutes)
         scheduler.add_job(
             func=send_email,
@@ -53,6 +56,20 @@ def send_message():
         print("❌ GPT or schedule error:", e)
         return f"<p>❌ Failed to process reminder: {e}</p>"
 
+def send_email(to_sms, message_body):
+    msg = EmailMessage()
+    msg.set_content(message_body)
+    msg['Subject'] = "AI Reminder"
+    msg['From'] = "ai.reminder.app@gmail.com"
+    msg['To'] = to_sms
+
+    try:
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+            smtp.login("ai.reminder.app@gmail.com", "your-app-password-here")
+            smtp.send_message(msg)
+        print("✅ Sent message to:", to_sms)
+    except Exception as e:
+        print("❌ Email send error:", e)
 
 if __name__ == '__main__':
     app.run(debug=True)
