@@ -11,20 +11,16 @@
     </select><br><br>
 
     <label>Reminder Request:</label><br>
+    <input type="text" name="reminder_input" placeholder="e.g. Remind me in 25 minutes to check the pizza" required>
+    <button type="submit">Send Reminder</button>
+</form>
 
-    <script>
+<script>
   setInterval(() => {
     fetch('/check-reminders')
       .then(res => console.log("Checked reminders"))
       .catch(err => console.error("Ping failed", err));
-  }, 60000); // every 60 seconds
+  }, 60000);
 </script>
-
-    
-    <input type="text" name="reminder_input" placeholder="e.g. Remind me in 25 minutes to check the pizza" required>
-
-
-    <button type="submit">Send Reminder</button>
-</form>
 
 
