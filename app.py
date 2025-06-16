@@ -20,11 +20,11 @@ app = Flask(__name__)
 scheduler = BackgroundScheduler()
 scheduler.start()
 
+reminders = []
+
 @app.route('/')
 def home():
     return render_template('index.html')
-
-reminders = []
 
 @app.route('/send', methods=['POST'])
 def send_message():
@@ -33,19 +33,7 @@ def send_message():
     reminder_input = request.form.get('reminder_input')
     to_sms = f"{phone_number}@{carrier}"
 
-    parsed = extract_reminder_with_gpt(reminder_input)
-    delay_minutes = parsed.get("delay", 0)
-    message_body = parsed.get("message", "No message provided")
-    send_time = datetime.datetime.now() + datetime.timedelta(minutes=delay_minutes)
-
-    # Store reminder
-    reminders.append({
-        "to": to_sms,
-        "message": message_body,
-        "send_time": send_time.isoformat()
-    })
-
-       try:
+    try:
         parsed = extract_reminder_with_gpt(reminder_input)
         delay_minutes = parsed.get("delay", 0)
         message_body = parsed.get("message", "No message provided")
@@ -63,7 +51,6 @@ def send_message():
         print("❌ Scheduling error:", e)
         return f"<p>❌ Failed to schedule reminder: {e}</p>"
 
-
 @app.route('/check-reminders')
 def check_reminders():
     global reminders
@@ -74,12 +61,9 @@ def check_reminders():
         send_email(reminder["to"], reminder["message"])
         print("✅ Sent from cron to", reminder["to"])
 
-    # Remove sent reminders
-   
     reminders = [r for r in reminders if datetime.datetime.fromisoformat(r["send_time"]) > now]
 
     return f"✅ Checked at {now}. Sent {len(to_send)} reminder(s)."
-
 
 def extract_reminder_with_gpt(reminder_input):
     try:
@@ -87,13 +71,13 @@ def extract_reminder_with_gpt(reminder_input):
             model="gpt-3.5-turbo",
             messages=[
                 {
-                  "role": "system",
-                  "content": (
-                      "You are a reminder parser. Extract the time delay and message from the user's input. "
-                      "Always return JSON in the format: {\"delay\": <int>, \"message\": <string>}, where delay is the total number of minutes. "
-                      "If the user says '3 hours', convert to 180. If they say '1 hour 30 minutes', return 90. "
-                      "Do not include units or any extra explanation — respond only with the raw JSON object."
-                   )
+                    "role": "system",
+                    "content": (
+                        "You are a reminder parser. Extract the time delay and message from the user's input. "
+                        "Always return JSON in the format: {\"delay\": <int>, \"message\": <string>}, where delay is the total number of minutes. "
+                        "If the user says '3 hours', convert to 180. If they say '1 hour 30 minutes', return 90. "
+                        "Do not include units or any extra explanation — respond only with the raw JSON object."
+                    )
                 },
                 {"role": "user", "content": f"{reminder_input}"}
             ],
@@ -102,7 +86,6 @@ def extract_reminder_with_gpt(reminder_input):
 
         json_data = response.choices[0].message.content
         print("🧠 GPT JSON Reply:", json_data)
-
         return json.loads(json_data)
 
     except Exception as e:
