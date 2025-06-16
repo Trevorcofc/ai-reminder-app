@@ -13,6 +13,7 @@ load_dotenv()
 
 # 🎯 OpenAI client setup
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+print("Loaded OpenAI Key:", os.getenv("OPENAI_API_KEY"))
 
 # 📅 Flask + Scheduler setup
 app = Flask(__name__)
