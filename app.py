@@ -24,6 +24,8 @@ scheduler.start()
 def home():
     return render_template('index.html')
 
+reminders = []
+
 @app.route('/send', methods=['POST'])
 def send_message():
     phone_number = request.form.get('phone_number')
@@ -31,24 +33,39 @@ def send_message():
     reminder_input = request.form.get('reminder_input')
     to_sms = f"{phone_number}@{carrier}"
 
-    try:
-        parsed = extract_reminder_with_gpt(reminder_input)
-        delay_minutes = parsed.get("delay", 0)
-        message_body = parsed.get("message", "No message provided")
+    parsed = extract_reminder_with_gpt(reminder_input)
+    delay_minutes = parsed.get("delay", 0)
+    message_body = parsed.get("message", "No message provided")
+    send_time = datetime.datetime.now() + datetime.timedelta(minutes=delay_minutes)
 
-        run_time = datetime.datetime.now() + datetime.timedelta(minutes=delay_minutes)
-        scheduler.add_job(
-            func=send_email,
-            trigger='date',
-            run_date=run_time,
-            args=[to_sms, message_body]
-        )
+    # Store reminder
+    reminders.append({
+        "to": to_sms,
+        "message": message_body,
+        "send_time": send_time.isoformat()
+    })
 
-        return f"<p>✅ AI Reminder scheduled in {delay_minutes} minute(s): {message_body}</p>"
+    return f"<p>✅ Reminder scheduled in {delay_minutes} minute(s): {message_body}</p>"
 
     except Exception as e:
         print("❌ Scheduling error:", e)
         return f"<p>❌ Failed to schedule reminder: {e}</p>"
+
+@app.route('/check-reminders')
+def check_reminders():
+    now = datetime.datetime.now()
+    to_send = [r for r in reminders if datetime.datetime.fromisoformat(r["send_time"]) <= now]
+
+    for reminder in to_send:
+        send_email(reminder["to"], reminder["message"])
+        print("✅ Sent from cron to", reminder["to"])
+
+    # Remove sent reminders
+    global reminders
+    reminders = [r for r in reminders if datetime.datetime.fromisoformat(r["send_time"]) > now]
+
+    return f"✅ Checked at {now}. Sent {len(to_send)} reminder(s)."
+
 
 def extract_reminder_with_gpt(reminder_input):
     try:
