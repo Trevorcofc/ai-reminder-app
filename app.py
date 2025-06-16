@@ -55,7 +55,15 @@ def extract_reminder_with_gpt(reminder_input):
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": "Respond ONLY in JSON like: {\"delay\": 25, \"message\": \"check the pizza\"}"},
+                {
+                  "role": "system",
+                  "content": (
+                      "You are a reminder parser. Extract the time delay and message from the user's input. "
+                      "Always return JSON in the format: {\"delay\": <int>, \"message\": <string>}, where delay is the total number of minutes. "
+                      "If the user says '3 hours', convert to 180. If they say '1 hour 30 minutes', return 90. "
+                      "Do not include units or any extra explanation — respond only with the raw JSON object."
+                   )
+                },
                 {"role": "user", "content": f"{reminder_input}"}
             ],
             response_format={"type": "json_object"}
