@@ -45,14 +45,28 @@ def send_message():
         "send_time": send_time.isoformat()
     })
 
-    return f"<p>✅ Reminder scheduled in {delay_minutes} minute(s): {message_body}</p>"
+       try:
+        parsed = extract_reminder_with_gpt(reminder_input)
+        delay_minutes = parsed.get("delay", 0)
+        message_body = parsed.get("message", "No message provided")
+        send_time = datetime.datetime.now() + datetime.timedelta(minutes=delay_minutes)
+
+        reminders.append({
+            "to": to_sms,
+            "message": message_body,
+            "send_time": send_time.isoformat()
+        })
+
+        return f"<p>✅ Reminder scheduled in {delay_minutes} minute(s): {message_body}</p>"
 
     except Exception as e:
         print("❌ Scheduling error:", e)
         return f"<p>❌ Failed to schedule reminder: {e}</p>"
 
+
 @app.route('/check-reminders')
 def check_reminders():
+    global reminders
     now = datetime.datetime.now()
     to_send = [r for r in reminders if datetime.datetime.fromisoformat(r["send_time"]) <= now]
 
@@ -61,7 +75,7 @@ def check_reminders():
         print("✅ Sent from cron to", reminder["to"])
 
     # Remove sent reminders
-    global reminders
+   
     reminders = [r for r in reminders if datetime.datetime.fromisoformat(r["send_time"]) > now]
 
     return f"✅ Checked at {now}. Sent {len(to_send)} reminder(s)."
