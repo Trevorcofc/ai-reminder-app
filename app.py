@@ -94,7 +94,8 @@ def send_email(to_sms, message_body):
         print("❌ Email send error:", e)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+
 
 
 
